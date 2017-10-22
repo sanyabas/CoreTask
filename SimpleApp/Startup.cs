@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,15 +25,14 @@ namespace SimpleApp
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            if (env.IsDevelopment())
+            app.Use(async (context, next) =>
             {
-                app.UseDeveloperExceptionPage();
-                app.UseBrowserLink();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
-            }
+                var sw = Stopwatch.StartNew();
+                await next();
+                await context.Response.WriteAsync($"Lambda: elapsed {sw.ElapsedMilliseconds} ms<br>");
+            });
+
+            app.UseMiddleware<SimpleTimeMeasurer>();
 
             app.UseStaticFiles();
 
